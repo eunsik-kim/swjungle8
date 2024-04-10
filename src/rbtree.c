@@ -284,7 +284,7 @@ void rearrange_tree(rbtree *rbt, node_t *replaceNode, dir direction) // directio
 		if (parentNode->color == RBTREE_RED)
 			parentNode->color = RBTREE_BLACK; // else a color the parentNode is red => end of rearrangement,
 		else if (parentNode != rbt->root)
-		{ // except for root, recursively call case1(acyclic), case2, case4
+		{ // recursively call case1(acyclic), case2, case4 and it will stop if parentNode is root 
 			dir direction = (parentNode->parent->left == parentNode) ? LEFT : RIGHT;
 			rearrange_tree(rbt, parentNode, direction);
 		}
