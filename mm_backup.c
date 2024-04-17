@@ -76,14 +76,11 @@ void set_succ_pred_ascend(void *bptr);
 void drop_freeblock(void *bptr);
 void **get_headptr(int alignSize);
 void print_freeblock();
-void check_freeblock_alive();
-void check_freeblock_small() 
+void check_freeblock();
 
 static void **head = NULL;
 static void *lastBptr;
 typedef enum {FREE, ALLOC} bit_check; 
-//static void *survive_ptr =  0xf68c6ed8;
-//static int alive_flg = 0;
 
 /* 
  * initialize free linked list header blocks to indicates pointer of each linked list
@@ -105,6 +102,7 @@ int mm_init(void)
 /* extend heap memory aligned to 8 bytes */
 void *extend_heap(int size)
 {   
+    //printf("사이즈 부족으로 size %d 연장\n", size);
     void *bptr;
     if ((bptr = mem_sbrk(size)) == (void *) -1)
         return (void *) -1;
@@ -256,14 +254,16 @@ void mm_free(void *bptr)
     int size = GET_SIZE(bptr);
     PUT_VALUE(HEADPTR(bptr), size);
     PUT_VALUE(FOOTPTR_MS(bptr, size), size);
+    //printf("mm_free | free block 위치 %p | 현재 size %d\n", (unsigned int *)bptr, size);
     coalesce(bptr);
-    // if (bptr == survive_ptr)
-    //   alive_flg = 1;
+    //print_freeblock();
+        
 }
 
 /* find first place to fit in starting from head of free blocks */
 void *first_fit(int targetSize) 
 {   
+    //printf("-----------------------firstfit start-----목표크기 %d----------------\n", targetSize);
     unsigned int *lastHeadBptr = (unsigned int *)head + INDEXSIZE; // to check the end of linked lists
     unsigned int *headBptr = (unsigned int *)get_headptr(targetSize);
     void *nowBptr;
@@ -277,13 +277,16 @@ void *first_fit(int targetSize)
         int nowSize;
         while ((nowBptr != NULL) && (targetSize > (nowSize = GET_SIZE(nowBptr))))
             {   
+                //printf("%d. free block 위치 %p | 현재 size %d\n", ++i, (unsigned int *)nowBptr, GET_WORD(HEADPTR(nowBptr))); 
                 nowBptr = GET_PTR(SUCCPTR(nowBptr));
             }
 
         if ((nowBptr != NULL) && (targetSize <= nowSize))
             return nowBptr;
     } while ((nowBptr == NULL) && (headBptr != lastHeadBptr));
-
+    // if (nowBptr != NULL)
+    //     printf("%d. free block 위치 %p | 현재 size %d\n", ++i, (unsigned int *)nowBptr, GET_WORD(HEADPTR(nowBptr))); 
+    // printf("-----------------------firstfit end-------------------------------\n");
     return nowBptr;
 }
 
@@ -300,10 +303,10 @@ void print_freeblock()
     do {   
         nowBptr = GET_PTR(headBptr);
         if (nowBptr != NULL)
-            printf("headerblock location %p | header size %d\n", (unsigned int *)headBptr, headerSize);
+            printf("headerblock 위치 %p | header 크기 %d\n", (unsigned int *)headBptr, headerSize);
         while (nowBptr != NULL) 
             {   
-                printf("%d. free block location %p | now size %d | front ptr %p | back ptr %p\n", ++i, (unsigned int *)nowBptr, GET_WORD(HEADPTR(nowBptr)), GET_PTR(PREDPTR(nowBptr)), GET_PTR(SUCCPTR(nowBptr))); 
+                printf("%d. free block 위치 %p | 현재 size %d | 앞 ptr %p | 뒤 ptr %p\n", ++i, (unsigned int *)nowBptr, GET_WORD(HEADPTR(nowBptr)), GET_PTR(PREDPTR(nowBptr)), GET_PTR(SUCCPTR(nowBptr))); 
                 nowBptr = GET_PTR(SUCCPTR(nowBptr));
             }
         headBptr += 1;
@@ -317,7 +320,7 @@ void print_freeblock()
 }
 
 /* check the specific block is alive from linked free list */
-// void check_freeblock_alive() 
+// void check_freeblock() 
 // {   
 //     unsigned int *lastHeadBptr = (unsigned int *)head + INDEXSIZE; // to check the end of linked lists
 //     unsigned int *headBptr = (unsigned int *)get_headptr(16);
@@ -329,7 +332,7 @@ void print_freeblock()
 //         nowBptr = GET_PTR(headBptr);
 //         while (nowBptr != NULL) 
 //         {   
-//             if (alive_flg && (nowBptr == 0xf68c6ed8))
+//             if (flg && (nowBptr == 0xf68c6ed8))
 //                 isalive = 1;
 //             nowBptr = GET_PTR(SUCCPTR(nowBptr));  
 //         }
@@ -340,11 +343,11 @@ void print_freeblock()
 //         else
 //             headerSize = (headerSize-8) * 2 + 8; 
 //     } while ((nowBptr == NULL) && (headBptr != lastHeadBptr));
-//     assert(alive_flg == isalive);
+//     assert(flg == isalive);
 // }
 
 /* check that all headptr block is smaller than child */
-void check_freeblock_small() 
+void check_freeblock() 
 {   
     unsigned int *lastHeadBptr = (unsigned int *)head + INDEXSIZE; // to check the end of linked lists
     unsigned int *headBptr = (unsigned int *)get_headptr(16);
@@ -399,16 +402,19 @@ void *mm_malloc(size_t size)
     int freeSize = findSize - resize;
     void *nextBptr;
     // 2. place block
-
+    //print_freeblock();
     drop_freeblock(bptr); 
     DELETE_DANGLE(bptr);
     if (freeSize >= QSIZE) 
     {   
+        //printf("block 위치 %p | 들어갈 list의 크기 %d | 넣어야할 size 크기 %d\n", (unsigned int *)bptr, findSize, resize);   
         PUT_VALUE(HEADPTR(bptr), PACKING_BIT(resize, 1));
         PUT_VALUE(FOOTPTR_MS(bptr, resize), PACKING_BIT(resize, 1));
+        //printf("free block 위치 %p | 나머지 block 크기 %d\n", (unsigned int *)NEXT_BLKP(bptr), freeSize);
         nextBptr = NEXT_BLKP_MS(bptr, resize);
         PUT_VALUE(HEADPTR(nextBptr), freeSize);
         PUT_VALUE(FOOTPTR_MS(nextBptr, freeSize), freeSize);
+        //printf("free block footer 위치 %p | 적힌 값 %d\n", (unsigned int *)FOOTPTR_MS(nextBptr, freeSize), GET_WORD(FOOTPTR_MS(nextBptr, freeSize))); 
         set_succ_pred_ascend(nextBptr);
         if (CHECK_LAST(nextBptr))
             lastBptr = nextBptr;
@@ -419,6 +425,7 @@ void *mm_malloc(size_t size)
         PUT_VALUE(FOOTPTR_MS(bptr, findSize), PACKING_BIT(findSize, 1));
         if (CHECK_LAST(bptr))
             lastBptr = bptr;
+        //printf("block 위치 %p | padding으로 넣을 size 크기 %d\n", (unsigned int *)bptr, GET_WORD(HEADPTR(bptr)));
     }
     return bptr;
 }
@@ -429,6 +436,7 @@ void *mm_realloc(void *oldBptr, size_t size)
     if (oldBptr == NULL)
         return (void *)-1;
 
+    //printf("-----------------------------realloc start------------------------------\n");
     // to back-up data for mm_free
     int oldSize = GET_SIZE(oldBptr);
     int tempSucc, tempPred, tempFoot, originSize;
@@ -456,6 +464,7 @@ void *mm_realloc(void *oldBptr, size_t size)
             fprintf(stderr, "ERROR: mm_realloc failed due to mem_sbrk\n");
             return NULL;
         }
+        //printf("사이즈 부족으로 Chuncksize %d 연장\n", extendSize);
     }
     int findSize = GET_SIZE(newBptr);
     int freeSize = findSize - resize;
@@ -470,15 +479,18 @@ void *mm_realloc(void *oldBptr, size_t size)
     {
         if (freeSize >= QSIZE) 
         {   
+            //printf("block 위치 %p | 들어갈 list의 크기 %d | 넣어야할 size 크기 %d\n", (unsigned int *)newBptr, findSize, resize);   
             PUT_VALUE(HEADPTR(newBptr), PACKING_BIT(resize, 1));                // set a second alloc bit whether alloc or not
             memmove(newBptr, oldBptr, oldSize - DSIZE);
             PUT_VALUE(FOOTPTR_MS(newBptr, resize), PACKING_BIT(resize, 1));
+            //printf("free block 위치 %p | 나머지 block 크기 %d\n", (unsigned int *)NEXT_BLKP(newBptr), freeSize);
             nextBptr = NEXT_BLKP(newBptr);
             PUT_VALUE(HEADPTR(nextBptr), freeSize);
             PUT_VALUE(FOOTPTR_MS(nextBptr, freeSize), freeSize);
             set_succ_pred_ascend(nextBptr);
             if (CHECK_LAST(nextBptr))
                 lastBptr = nextBptr;
+            //printf("free block footer 위치 %p | 적힌 값 %d\n", (unsigned int *)FOOTPTR_MS(nextBptr, freeSize), GET_WORD(FOOTPTR_MS(nextBptr, freeSize)));
         }
         else // avoid fragmentation
         {   
@@ -487,22 +499,26 @@ void *mm_realloc(void *oldBptr, size_t size)
                 lastBptr = newBptr;
             memmove(newBptr, oldBptr, oldSize - DSIZE);
             PUT_VALUE(FOOTPTR_MS(newBptr, findSize), PACKING_BIT(findSize, 1));
+            //printf("block 위치 %p | padding으로 넣을 size 크기 %d\n", (unsigned int *)newBptr, GET_WORD(HEADPTR(newBptr)));
         }
     }
     else 
     {
         if (freeSize >= QSIZE) 
         {   
+            //printf("block 위치 %p | 들어갈 list의 크기 %d | 넣어야할 size 크기 %d\n", (unsigned int *)newBptr, findSize, resize);   
             PUT_VALUE(FOOTPTR_MS(newBptr, resize), PACKING_BIT(resize, 1));
             memmove(newBptr, oldBptr, oldSize - WSIZE);
             PUT_VALUE(HEADPTR(newBptr), PACKING_BIT(resize, 1));
             
+            //printf("free block 위치 %p | 나머지 block 크기 %d\n", (unsigned int *)NEXT_BLKP(newBptr), freeSize);
             nextBptr = NEXT_BLKP(newBptr);
             PUT_VALUE(HEADPTR(nextBptr), freeSize);
             PUT_VALUE(FOOTPTR_MS(nextBptr, freeSize), freeSize);
             set_succ_pred_ascend(nextBptr);
             if (CHECK_LAST(nextBptr))
                 lastBptr = nextBptr;
+            //printf("free block footer 위치 %p | 적힌 값 %d\n", (unsigned int *)FOOTPTR_MS(nextBptr, freeSize), GET_WORD(FOOTPTR_MS(nextBptr, freeSize)));
         }
         else // avoid fragmentation
         {   
@@ -511,11 +527,13 @@ void *mm_realloc(void *oldBptr, size_t size)
             PUT_VALUE(HEADPTR(newBptr), PACKING_BIT(findSize, 1));
             if (CHECK_LAST(newBptr))
                 lastBptr = newBptr;
+            //printf("block 위치 %p | padding으로 넣을 size 크기 %d\n", (unsigned int *)newBptr, GET_WORD(HEADPTR(newBptr)));
         }        
     }
     PUT_VALUE(SUCCPTR(newBptr), tempSucc);
     PUT_VALUE(PREDPTR(newBptr), tempPred);
     if (originSize <= resize)
         PUT_VALUE((char *)(newBptr) + originSize - DSIZE, tempFoot);
+    //printf("-----------------------------realloc end------------------------------\n");
     return newBptr;
 }
