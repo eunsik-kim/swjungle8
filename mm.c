@@ -77,12 +77,12 @@ void drop_freeblock(void *bptr);
 void **get_headptr(int alignSize);
 void print_freeblock();
 void check_freeblock_alive();
-void check_freeblock_small() 
+void check_freeblock_small();
 
 static void **head = NULL;
 static void *lastBptr;
 typedef enum {FREE, ALLOC} bit_check; 
-//static void *survive_ptr =  0xf68c6ed8;
+//static void *survive_ptr = 0xf68c6ed8;
 //static int alive_flg = 0;
 
 /* 
@@ -181,7 +181,7 @@ void drop_freeblock(void *bptr)
         PUT_PTR(SUCCPTR(freeBefBptr), freeNxtBptr);
     else
         PUT_PTR(headBptr, freeNxtBptr);
-    check_freeblock(); //why does this function make dummy data clean?
+    check_freeblock_small(); //why does this function make dummy data clean?
 }
 
 /* insert the bptr reconnecting between adjecent blocks in ascending order */
