@@ -1,3 +1,10 @@
+Outcome score(run in AWS Ubuntu 22.04.4 LTS)
+1. mm_implicit : 76
+2. mm_explicit_LIFO : 86
+3. mm_explicit_addr : 56
+4. mm_segregatet_fit(mm.c) : 88
+
+
 #####################################################################
 # CS:APP Malloc Lab
 # Handout files for students
