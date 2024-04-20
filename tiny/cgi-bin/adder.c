@@ -5,19 +5,19 @@
 #include "csapp.h"
 
 int main(void) {
-    char *buf, *p, *checkNULL;
-    char arg1[MAXLINE], arg2[MAXLINE], content[MAXLINE];
+    char *buf, *p, *checkNULL, *num1, *num2;
+    char content[MAXLINE];
     int n1=0, n2=0;
 
     if ((buf = getenv("QUERY_STRING")) != NULL) {
         p = strchr(buf, '&');
         *p = '\0';
-        strcpy(arg1, buf);
-        strcpy(arg2, p+1);
-        n1 = strtol(arg1, &checkNULL, 10);
+        num1 = index(buf, '=');         // 11.10
+        num2 = index(p+1, '=');
+        n1 = strtol(num1+1, &checkNULL, 10);
         if (*checkNULL != '\0')
             unix_error("strtol error");
-        n2 = strtol(arg2, &checkNULL, 10);
+        n2 = strtol(num2+1, &checkNULL, 10);
         if (*checkNULL != '\0')
             unix_error("strtol error");
     }
@@ -27,7 +27,10 @@ int main(void) {
 
     printf("Content-length: %d\r\n", (int)strlen(content));
     printf("Content-type: text/html\r\n\r\n");
-    printf("%s", content);
+    char *method = getenv("REQUEST_METHOD");
+    if (strcasecmp(method, "HEAD")) // 11.11
+        printf("%s", content);
+    
     fflush(stdout);
     exit(0);
 }
