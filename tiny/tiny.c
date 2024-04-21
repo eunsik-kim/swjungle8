@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    signal(SIGPIPE, SIG_IGN);
     listenfd = Open_listenfd(argv[1]);
     while (1) {
         clientlen = sizeof(clientaddr);
@@ -53,7 +54,7 @@ void doit(int fd)
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
     printf("Request headers:\n");
-    printf("%s\n", buf);
+    printf("%s", buf);
     sscanf(buf, "%s %s %s", method, uri, version);
     setenv("REQUEST_METHOD", method, 1);
     if (strcasecmp(method, "GET") && strcasecmp(method, "HEAD")) {
@@ -108,6 +109,7 @@ void read_requesthdrs(rio_t *rp)
 {
     char buf[MAXLINE];
     Rio_readlineb(rp, buf, MAXLINE);
+    printf("%s", buf);
     while(strcmp(buf, "\r\n")) {
         Rio_readlineb(rp, buf, MAXLINE);
         printf("%s", buf);
@@ -178,11 +180,11 @@ void get_filetype(char *filename, char *filetype)
         strcpy(filetype, "text/html");
     else if (strstr(filename, ".gif"))
         strcpy(filetype, "image/gif");
-    else if (strstr(filename, "./png"))
+    else if (strstr(filename, ".png"))
         strcpy(filetype, "image/png");
-    else if (strstr(filename, "./jpg"))
+    else if (strstr(filename, ".jpg"))
         strcpy(filetype, "image/jpeg");
-    else if (strstr(filename, "./mp4"))
+    else if (strstr(filename, ".mp4"))
         strcpy(filetype, "image/mp4");
     else
         strcpy(filetype, "text/plain");
