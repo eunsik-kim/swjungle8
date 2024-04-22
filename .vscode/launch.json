@@ -5,7 +5,7 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",
-      "args": ["45806"],
+      "args": ["45807"],
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/home/ubuntu/cproject/practice",

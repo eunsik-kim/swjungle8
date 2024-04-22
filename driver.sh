@@ -237,7 +237,7 @@ do
     numRun=`expr $numRun + 1`
     echo "${numRun}: ${file}"
     clear_dirs
-
+    
     # Fetch using the proxy
     echo "   Fetching ./tiny/${file} into ${PROXY_DIR} using the proxy"
     download_proxy $PROXY_DIR ${file} "http://localhost:${tiny_port}/${file}" "http://localhost:${proxy_port}"
@@ -248,9 +248,9 @@ do
 
     # Compare the two files
     echo "   Comparing the two files"
-    diff -q ${PROXY_DIR}/${file} ${NOPROXY_DIR}/${file} &> /dev/null
+    diff -q ${PROXY_DIR}/${file} ${NOPROXY_DIR}/${file}
     if [ $? -eq 0 ]; then
-        numSucceeded=`expr ${numSucceeded} + 1`
+        numSucceeded=$(expr ${numSucceeded} + 1)
         echo "   Success: Files are identical."
     else
         echo "   Failure: Files differ."

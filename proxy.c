@@ -9,7 +9,7 @@ static const char *user_agent_hdr =
     "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 "
     "Firefox/10.0.3\r\n";
 int request_transfer(int clientfd);
-int parse_header(rio_t *rio, int clientfd);
+int parse_header(rio_t *rio, int clientfd, char *hostname);
 void response_transfer(int clientfd, int serverfd);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 
@@ -19,13 +19,12 @@ int main(int argc, char **argv) {
     struct sockaddr_storage clientaddr;
     char clienthost[MAXLINE], clientport[MAXLINE];
     socklen_t clientlen;
-    
+    signal(SIGPIPE, SIG_IGN);
     /* checking proxy port args */
     if (argc != 2){
         fprintf(stderr, "usage: %s <port>\n", argv[0]);
         exit(1);
     }
-
     listenfd = Open_listenfd(argv[1]);
     while (1) {
         clientlen = sizeof(clientaddr);
@@ -35,23 +34,27 @@ int main(int argc, char **argv) {
         if ((serverfd = request_transfer(clientfd)) != -1)
             response_transfer(clientfd, serverfd);
         Close(clientfd);
+        printf("\n");
     }
     return 0;
 }
 
+/* parsing and fillin missing header then, transfer request to server */
 int request_transfer(int clientfd)
 {   
-    char buf[MAXLINE];
-    int serverfd, isUserAgent = 0, isCon = 0, isProxCon = 0;
-
+    char buf[MAXLINE], hostname[MAXLINE], con[40], proxcon[40];;
+    int serverfd, isUserAgent = 0, isHost = 0, isCon = 0, isProxCon = 0;
+    strcpy(hostname, "Host: ");
     rio_t rio;
     Rio_readinitb(&rio, clientfd);
-    if ((serverfd = parse_header(&rio, clientfd)) == -1)
+    if ((serverfd = parse_header(&rio, clientfd, hostname)) == -1)
         return -1;
 
     while(strcmp(buf, "\r\n")) {
         Rio_readlineb(&rio, buf, MAXLINE);
         // check existance of important request headers
+        if (strstr(buf, "Host"))
+            isHost = 1;
         if (strstr(buf, "User-Agent"))
             isUserAgent = 1;
         if (strstr(buf, "Proxy-Connection"))
@@ -66,10 +69,15 @@ int request_transfer(int clientfd)
         }
     }
 
-    if (!isUserAgent)
+    // insert important missing headers
+    if (!isHost){
+        printf("%s", hostname);
+        Rio_writen(serverfd, hostname, strlen(user_agent_hdr));
+    }
+    if (!isUserAgent){
+        printf("%s", user_agent_hdr);
         Rio_writen(serverfd, (void *)user_agent_hdr, strlen(user_agent_hdr));
-
-    char con[20], proxcon[26];
+    }
     if (!isCon){
         strcpy(con, "Connection: close\r\n");
         printf("%s", con);
@@ -80,11 +88,11 @@ int request_transfer(int clientfd)
         printf("%s", proxcon);
         Rio_writen(serverfd, proxcon, strlen(proxcon));
     }
-    Rio_writen(serverfd, buf, strlen(buf));
+    Rio_writen(serverfd, buf, strlen(buf)); // insert "\r\n" at the end of header 
     return serverfd;
 }
 
-int parse_header(rio_t *rio, int clientfd)
+int parse_header(rio_t *rio, int clientfd, char *hostname)
 {   
     int serverfd;
     char buf[MAXLINE], serverhost[MAXLINE], serverport[MAXLINE];
@@ -98,17 +106,26 @@ int parse_header(rio_t *rio, int clientfd)
         return -1;
     }
 
+    if (strstr(uri, "favicon")) {
+        printf("Tiny couldn't find the favicon.");
+        return -1;
+    }
+
     // parsing header request
     char *hostptr, *portptr, *rootptr;
     hostptr = index(uri, ':') + 3;
     rootptr = index(hostptr, '/');
     *rootptr = '\0';
+    strcat(hostname, hostptr);
+    strcat(hostname, "\r\n");
     portptr = index(hostptr, ':');
     
     if (portptr){
         strcpy(serverport, portptr + 1);
         *portptr = '\0';
     }
+    else if(*(portptr-1) == 's')
+        strcpy(serverport, "443");
     else    // html default port
         strcpy(serverport, "80");
     strcpy(serverhost, hostptr);
@@ -116,8 +133,8 @@ int parse_header(rio_t *rio, int clientfd)
     // concatenate header request
     strcpy(new_uri, method);
     strcat(new_uri, " /");
-    if (!strcmp(rootptr+1, "\0"))
-        strcat(new_uri, rootptr);
+    if (!strcmp(rootptr, "\0"))
+        strcat(new_uri, rootptr+1);
     strcat(new_uri, " ");
     strcat(new_uri, "HTML/1.0\r\n");   // modify version HTML/1.1 into HTML/1.0
 
@@ -146,17 +163,13 @@ void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longms
 
 void response_transfer(int clientfd, int serverfd)
 {   
-    rio_t rio;
     char buf[MAXLINE];
-    Rio_readinitb(&rio, serverfd);
-    do {  
-        Rio_readlineb(&rio, buf, MAXLINE);
-        Rio_writen(clientfd, buf, strlen(buf));
-    } while (strcmp(buf, "\r\n"));
+    int read_cnt = 0, acc_cnt = 0;
     
-    do {  
-        Rio_readlineb(&rio, buf, MAXLINE);
-        Rio_writen(clientfd, buf, strlen(buf));
-    } while (strcmp(buf, "\r\n"));
+    while ((read_cnt = Rio_readn(serverfd, buf, MAXLINE)) > 0){
+        Rio_writen(clientfd, buf, MAXLINE);
+        acc_cnt += read_cnt;
+    }
+    printf("Response-length: %d\n", acc_cnt);
     Close(serverfd);
 }
