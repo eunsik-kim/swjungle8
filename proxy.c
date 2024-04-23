@@ -12,13 +12,16 @@ int request_transfer(int clientfd);
 int parse_header(rio_t *rio, int clientfd, char *hostname);
 void response_transfer(int clientfd, int serverfd);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
+void *thread(void *vargp);
 
-int main(int argc, char **argv) {
-    
-    int listenfd, clientfd, serverfd;
+int main(int argc, char **argv) 
+{
+    int listenfd, *clientfd;
     struct sockaddr_storage clientaddr;
     char clienthost[MAXLINE], clientport[MAXLINE];
     socklen_t clientlen;
+    pthread_t tid;
+
     signal(SIGPIPE, SIG_IGN);
     /* checking proxy port args */
     if (argc != 2){
@@ -26,17 +29,30 @@ int main(int argc, char **argv) {
         exit(1);
     }
     listenfd = Open_listenfd(argv[1]);
+    int i = 0;
     while (1) {
         clientlen = sizeof(clientaddr);
-        clientfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+        clientfd = (int *)Malloc(sizeof(int));
+        *clientfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
         Getnameinfo((SA *)&clientaddr, clientlen, clienthost, MAXLINE, clientport, MAXLINE, 0);
         printf("Accepted connection from client (%s, %s)\n", clienthost, clientport);
-        if ((serverfd = request_transfer(clientfd)) != -1)
-            response_transfer(clientfd, serverfd);
-        Close(clientfd);
         printf("\n");
+        Pthread_create(&tid, NULL, thread, clientfd);
+        printf("It's my %d circle.\n", ++i);
     }
     return 0;
+}
+
+void *thread(void *vargp)
+{   
+    printf("Hi, I'm %ld tid.\n", pthread_self());
+    int serverfd, clientfd = *((int *)vargp);
+    //Pthread_detach(pthread_self());
+    Free(vargp);
+    if ((serverfd = request_transfer(clientfd)) != -1)
+            response_transfer(clientfd, serverfd);
+    Close(clientfd);
+    return NULL;
 }
 
 /* parsing and fillin missing header then, transfer request to server */
@@ -100,9 +116,10 @@ int parse_header(rio_t *rio, int clientfd, char *hostname)
 
     Rio_readlineb(rio, buf, MAXLINE);
     sscanf(buf, "%s %s %s", method, uri, version);
+    printf("Request uri: %s\n", uri);
     // only GET request
     if (strcasecmp(method, "GET")){ 
-        clienterror(clientfd, "method", "501", "Not implemented", "Tiny does not implement this method");
+        clienterror(clientfd, method, "501", "Not implemented", "Tiny does not implement this method");
         return -1;
     }
 
@@ -114,7 +131,13 @@ int parse_header(rio_t *rio, int clientfd, char *hostname)
     // parsing header request
     char *hostptr, *portptr, *rootptr;
     hostptr = index(uri, ':') + 3;
+    int ishttps = (*(hostptr-4) == 's') ? 1 : 0;
     rootptr = index(hostptr, '/');
+    // exception for html src request
+    if (rootptr == NULL){
+        clienterror(clientfd, "last of address '/' needed", "400", "Bad request", "Proxy have to add '/' at last address");
+        return -1;
+    }
     *rootptr = '\0';
     strcat(hostname, hostptr);
     strcat(hostname, "\r\n");
@@ -124,7 +147,7 @@ int parse_header(rio_t *rio, int clientfd, char *hostname)
         strcpy(serverport, portptr + 1);
         *portptr = '\0';
     }
-    else if(*(portptr-1) == 's')
+    else if(ishttps)
         strcpy(serverport, "443");
     else    // html default port
         strcpy(serverport, "80");
@@ -167,7 +190,7 @@ void response_transfer(int clientfd, int serverfd)
     int read_cnt = 0, acc_cnt = 0;
     
     while ((read_cnt = Rio_readn(serverfd, buf, MAXLINE)) > 0){
-        Rio_writen(clientfd, buf, MAXLINE);
+        Rio_writen(clientfd, buf, read_cnt);
         acc_cnt += read_cnt;
     }
     printf("Response-length: %d\n", acc_cnt);

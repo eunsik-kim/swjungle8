@@ -17,6 +17,11 @@
           "description": "Enable pretty-printing for gdb",
           "text": "-enable-pretty-printing",
           "ignoreFailures": true
+        },
+        {
+          "description": "Enable Valgrind",
+          "text": "-enable-valgrind",
+          "ignoreFailures": true
         }
       ]
     }

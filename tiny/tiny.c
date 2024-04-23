@@ -201,10 +201,8 @@ void get_filetype(char *filename, char *filetype)
 // 11.8
 void handler(int sig)
 {
-    int olderrno = errno;
     while (waitpid(-1, NULL, 0) > 0)
         Sio_puts("handler reapd child\n");
-    errno = olderrno;
 }
 
 void serve_dynamic(int fd, char *filename, char *cgiargs)
