@@ -5,6 +5,9 @@
  *
  * Updated 11/2019 droh
  *   - Fixed sprintf() aliasing issue in serve_static(), and clienterror().
+ * 
+ * Updated 4/2024 eunsik
+ *   - Full implementation from textbook with solving excercise.
  */
 #include "csapp.h"
 
@@ -116,8 +119,11 @@ void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longms
 void read_requesthdrs(rio_t *rp, int *headersize)
 {
     char buf[MAXLINE];
+    int n;
     do {
-        Rio_readlineb(rp, buf, MAXLINE);
+        n = Rio_readlineb(rp, buf, MAXLINE);
+        if (n < 0)
+            break;
         *headersize += strlen(buf);
         printf("%s", buf);
     } while(strcmp(buf, "\r\n"));
