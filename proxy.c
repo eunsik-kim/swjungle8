@@ -28,9 +28,13 @@ int request_transfer(int clientfd, rio_t *rio);
 int parse_header(int clientfd, char *hostname, char *method, char *uri);
 void response_transfer(int clientfd, int serverfd, rio_t *rio);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
+void free_LList();
 void *thread(void *vargp);
 
-static linked_list *LList;  // shared variables
+// shared variables for reader-writer problem
+static linked_list *LList;  
+int readcnt = 0;
+sem_t mutex, w;
 
 int main(int argc, char **argv) 
 {
@@ -44,6 +48,8 @@ int main(int argc, char **argv)
     LList->head = NULL;
     LList->tail = NULL;
     LList->size = 0;
+    Sem_init(&mutex, 0, 1);
+    Sem_init(&w, 0, 1);
 
     signal(SIGPIPE, SIG_IGN);
     /* checking proxy port args */
@@ -64,6 +70,7 @@ int main(int argc, char **argv)
         printf("It's my %d circle.\n", ++i);
         printf("\n");
     }
+    free_LList();
     return 0;
 }
 
@@ -71,20 +78,20 @@ void *thread(void *vargp)
 {    
     Pthread_detach(pthread_self());
     printf("Hi, I'm %ld tid.\n", pthread_self());
-
     int serverfd, clientfd = *((int *)vargp);
     Free(vargp);
-
     rio_t rio;
+
     Rio_readinitb(&rio, clientfd);
     if ((serverfd = request_transfer(clientfd, &rio)) != -1)
         response_transfer(clientfd, serverfd, &rio);
+    
     printf("====This connection is terminated====\n");
     Close(clientfd);
     return NULL;
 }
 
-/* parsing and fillin missing header then, transfer request to server */
+/* parsing and fillin missing header(host, user-agent, proxy-connection, connection)and transfer request to server */
 int request_transfer(int clientfd, rio_t *rio)
 {   
     char buf[MAXLINE], hostname[MAXLINE], con[40], proxcon[40];
@@ -95,26 +102,45 @@ int request_transfer(int clientfd, rio_t *rio)
     sscanf(buf, "%s %s %s", method, uri, version);
     printf("Request uri: %s\n", uri);
 
+    // reader sync
+    P(&mutex);
+    readcnt++;
+    if (readcnt == 1)
+        P(&w);
+    V(&mutex);
     // cached data check
     node_l *startNode = LList->head;
     while (startNode != NULL){
+        // compare header size and momeory of request with cache data
         if ((startNode->headerSize == strlen(rio->rio_buf))
                 && !memcmp(rio->rio_buf, startNode->header, startNode->headerSize)){
             rio_writen(clientfd, startNode->response, startNode->responseSize);
-            printf("This request is responsed by cached Data\n");
+            printf("---Cache hit!!---\n");
+            printf("LList-size: %d\n", LList->size);
+            P(&mutex);
+            readcnt--;
+            if (readcnt == 0)
+                V(&w);
+            V(&mutex);
             return -1;
         }
         startNode = startNode->right;
     }
+    printf("---Cache miss!!---\n");
+    P(&mutex);
+    readcnt--;
+    if (readcnt == 0)
+        V(&w);
+    V(&mutex);
 
     // only GET request
     if (strcasecmp(method, "GET")){ 
-        clienterror(clientfd, method, "501", "Not implemented", "Tiny does not implement this method");
+        clienterror(clientfd, method, "501", "Not implemented", "Server does not implement this method");
         return -1;
     }
     // ignore favicon request
     if (strstr(uri, "favicon")) {
-        printf("Tiny couldn't find the favicon.\n");
+        printf("Couldn't find the favicon.\n");
         return -1;
     }
 
@@ -146,7 +172,7 @@ int request_transfer(int clientfd, rio_t *rio)
     if (!isHost){
         printf("%s", hostname);
         rio_writen(serverfd, hostname, strlen(user_agent_hdr));
-    }
+    } 
     if (!isUserAgent){
         printf("%s", user_agent_hdr);
         rio_writen(serverfd, (void *)user_agent_hdr, strlen(user_agent_hdr));
@@ -232,8 +258,8 @@ void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longms
 void response_transfer(int clientfd, int serverfd, rio_t *rio)
 {   
     char responseHeader[MAXLINE], *buf;
-    int read_cnt=0, acc_cnt=0;
-    int responseSize=0, responseHeaderSize=0;
+    int read_cnt;
+    int responseSize = 0, responseHeaderSize=0;
     rio_t rp;
     // find Content-length
     Rio_readinitb(&rp, serverfd);
@@ -246,8 +272,15 @@ void response_transfer(int clientfd, int serverfd, rio_t *rio)
             responseSize = atoi(index(buf, ':') + 2);
     } while (strcmp(buf, "\r\n"));
     
-    if (responseHeaderSize + responseSize <= MAX_OBJECT_SIZE)
+    if (responseSize == 0){ 
+        clienterror(clientfd, "rejected access", "404", "Forbidden", "Proxy could not access request file");
+        return ;
+    }
+
+    if (responseSize <= MAX_OBJECT_SIZE)
     {   
+        // writer sync
+        P(&w);
         // initial Node to save resonse and request header(key)
         node_l *newNode = (node_l *)malloc(sizeof(node_l));
         newNode->header = (char *)malloc(strlen(rio->rio_buf));
@@ -265,7 +298,24 @@ void response_transfer(int clientfd, int serverfd, rio_t *rio)
             responseHeaderSize += read_cnt;
             buf = newNode->response + responseHeaderSize;
         }
-        acc_cnt = responseSize;
+        LList->size += responseSize;
+
+        // delete old cache memory while exceeding limit 
+        if (LList->size > MAX_CACHE_SIZE)
+        {   
+            node_l *startNode = LList->head;
+            while (LList->size > MAX_CACHE_SIZE){
+                LList->size -= startNode->responseSize;
+                printf("Deleted cache size: %d\n", startNode->responseSize);
+                free(startNode->header);
+                free(startNode->response);
+                if (startNode->right){
+                    startNode = startNode->right;
+                    free(startNode->left);
+                } else 
+                    free(startNode);
+            }
+        }
 
         // insert the newNode into the tail of linkedlist by LRU
         newNode->right = NULL;
@@ -276,6 +326,8 @@ void response_transfer(int clientfd, int serverfd, rio_t *rio)
         if (LList->head == NULL){
             LList->head = newNode;
         }
+        V(&w);
+        printf("LList-size: %d\n", LList->size);
     }
     else
     {
@@ -284,9 +336,23 @@ void response_transfer(int clientfd, int serverfd, rio_t *rio)
             rio_writen(clientfd, responsebuf, read_cnt);
             if (errno == EPIPE)
                 return;
-            acc_cnt += read_cnt;
         }
     }
-    printf("Response-length: %d\n", acc_cnt);
+    printf("Response-length: %d\n", responseSize);
     Close(serverfd);
+}
+
+void free_LList()
+{
+    node_l *startNode = LList->head;
+    while (startNode != NULL){
+        free(startNode->header);
+        free(startNode->response);
+        if (startNode->right){
+            startNode = startNode->right;
+            free(startNode->left);
+        } else 
+            free(startNode);
+    }
+    free(LList);
 }
