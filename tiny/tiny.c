@@ -9,7 +9,7 @@
 #include "csapp.h"
 
 void doit(int fd);
-void read_requesthdrs(rio_t *rp);
+void read_requesthdrs(rio_t *rp, int *headersize);
 int parse_uri(char *uri, char *filename, char *cgiargs);
 void serve_static(int fd, char *requestHead, char *filename, int filesize);
 void get_filetype(char *filename, char *filetype);
@@ -49,12 +49,14 @@ void doit(int fd)
     struct stat sbuf;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
     char filename[MAXLINE], cgiargs[MAXLINE];
+    int headersize;
     rio_t rio;
 
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
     printf("Request headers:\n");
     printf("%s", buf);
+    headersize = strlen(buf);
     sscanf(buf, "%s %s %s", method, uri, version);
     setenv("REQUEST_METHOD", method, 1);
     if (strstr(uri, "favicon")) {
@@ -66,7 +68,7 @@ void doit(int fd)
         clienterror(fd, method, "501", "Not implemented", "Tiny does not implement this method");
         return;
     }
-    read_requesthdrs(&rio);
+    read_requesthdrs(&rio, &headersize);
 
     is_static = parse_uri(uri, filename, cgiargs);
     if (stat(filename, &sbuf) < 0) {
@@ -111,15 +113,15 @@ void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longms
     Rio_writen(fd, body, strlen(body));
 }
 
-void read_requesthdrs(rio_t *rp)
+void read_requesthdrs(rio_t *rp, int *headersize)
 {
     char buf[MAXLINE];
-    Rio_readlineb(rp, buf, MAXLINE);
-    printf("%s", buf);
-    while(strcmp(buf, "\r\n")) {
+    do {
         Rio_readlineb(rp, buf, MAXLINE);
+        *headersize += strlen(buf);
         printf("%s", buf);
-    }
+    } while(strcmp(buf, "\r\n"));
+    printf("Request header size: %d\n", *headersize);
     return;
 }
 
@@ -161,7 +163,7 @@ void serve_static(int fd, char *requestHead, char *filename, int filesize)
     sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);
     sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
     Rio_writen(fd, buf, strlen(buf));
-    printf("Header-length: %d\n", strlen(buf));
+    printf("Response header size: %ld\n", strlen(buf));
     printf("Response headers:\n");
     printf("%s", buf);
     

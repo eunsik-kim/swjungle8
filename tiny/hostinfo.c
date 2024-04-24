@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;  // IPv4
     hints.ai_socktype = SOCK_STREAM; // connection only
-    if ((rc = getaddrinfo(argv[1], NULL, &hints, &listp)) != 0) {
+    if ((rc = getaddrinfo(argv[1], 80, &hints, &listp)) != 0) {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(rc));
         exit(1);
     }

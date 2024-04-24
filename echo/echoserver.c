@@ -1,6 +1,12 @@
 #include "csapp.h"
 
 void echo(int connfd);
+void handler(int sig)
+{
+    while (waitpid(-1, NULL, 0) > 0)
+        Sio_puts("handler reapd child\n");
+}
+
 
 int main(int argc, char **argv)
 {
@@ -14,15 +20,18 @@ int main(int argc, char **argv)
         exit(0);
     }
 
+    signal(SIGCHLD, handler);
     listenfd = Open_listenfd(argv[1]);
     while(1) {
         clientlen = sizeof(struct sockaddr_storage);
         connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-        Getnameinfo((SA *) &clientaddr, clientlen, client_hostname, MAXLINE,
+        if (Fork() == 0) {
+            Getnameinfo((SA *) &clientaddr, clientlen, client_hostname, MAXLINE,
                     client_port, MAXLINE, 0);
-        printf("Connected to (%s, %s)\n", client_hostname, client_port);
-        echo(connfd);
-        Close(connfd);
+            printf("Connected to (%s, %s)\n", client_hostname, client_port);        
+            echo(connfd);
+            exit(0);
+        }
     }
     exit(0);
 }

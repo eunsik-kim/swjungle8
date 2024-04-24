@@ -22,6 +22,11 @@
           "description": "Enable Valgrind",
           "text": "-enable-valgrind",
           "ignoreFailures": true
+        },
+        {
+          "description": "Handle SIGPIPE",
+          "text": "-handle SIGPIPE nostop",
+          "ignoreFailures": true
         }
       ]
     }
