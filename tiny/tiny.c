@@ -105,12 +105,12 @@ void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longms
     sprintf(body, "%s<hr><em>The Tiny Web server</em>\r\n", body);
     
     sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
-    Rio_writen(fd, buf, strlen(buf));
+    rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Content-type: text/html\r\n");
-    Rio_writen(fd, buf, strlen(buf));
+    rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Content-length: %d\r\n\r\n", (int)strlen(body));
-    Rio_writen(fd, buf, strlen(buf));
-    Rio_writen(fd, body, strlen(body));
+    rio_writen(fd, buf, strlen(buf));
+    rio_writen(fd, body, strlen(body));
 }
 
 void read_requesthdrs(rio_t *rp, int *headersize)
@@ -162,7 +162,7 @@ void serve_static(int fd, char *requestHead, char *filename, int filesize)
     sprintf(buf, "%sConnection: close\r\n", buf);
     sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);
     sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
-    Rio_writen(fd, buf, strlen(buf));
+    rio_writen(fd, buf, strlen(buf));
     printf("Response header size: %ld\n", strlen(buf));
     printf("Response headers:\n");
     printf("%s", buf);
@@ -173,14 +173,14 @@ void serve_static(int fd, char *requestHead, char *filename, int filesize)
 
     // 11.6.A
     // sprintf(buf, "<p>Request headers: %s</p>", requestHead);
-    // Rio_writen(fd, buf, strlen(buf));
+    // rio_writen(fd, buf, strlen(buf));
     // 11.9
     // srcp = (char *)malloc(filesize * sizeof(char));
     // Rio_readn(srcfd, srcp, filesize);
     srcfd = Open(filename, O_RDONLY, 0);
     srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
     Close(srcfd);
-    Rio_writen(fd, srcp, filesize);
+    rio_writen(fd, srcp, filesize);
     Munmap(srcp, filesize);
 }
 
@@ -212,9 +212,9 @@ void serve_dynamic(int fd, char *filename, char *cgiargs)
     char buf[MAXLINE], *emptylist[] = {NULL};
 
     sprintf(buf, "HTTP/1.0 200 OK\r\n");
-    Rio_writen(fd, buf, strlen(buf));
+    rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Server: Tiny Web Server\r\n");
-    Rio_writen(fd, buf, strlen(buf));
+    rio_writen(fd, buf, strlen(buf));
 
     signal(SIGCHLD, handler);
     if (Fork() == 0){
