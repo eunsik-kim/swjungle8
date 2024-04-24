@@ -1,7 +1,7 @@
 /*  
  * It is simple proxy. it is followed by CNU Assign(http://csapp.cs.cmu.edu/3e/proxylab.pdf)
  * 1. foward-proxy server 
- * 2. concurrent processing as prethreded server from textbook
+ * 2. concurrent multi thread from textbook
  * 3. caching response from server by LRU policy. Using linked list to allocate cache.
  *      When cache miss, checked duplicate cache and if it overlaps, refer same data simulataneously.
  *      Also synchronized thread with Reader-writer strategy in textbook
