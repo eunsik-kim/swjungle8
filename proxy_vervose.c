@@ -1,7 +1,7 @@
 /*  
  * It is simple proxy. it is followed by CNU Assign(http://csapp.cs.cmu.edu/3e/proxylab.pdf)
  * 1. foward-proxy server 
- * 2. concurrent processing as prethreded server from textbook
+ * 2. concurrent multi thread from textbook
  * 3. caching response from server by LRU policy. Using linked list to allocate cache.
  *      When cache miss, checked duplicate cache and if it overlaps, refer same data simulataneously.
  *      Also synchronized thread with Reader-writer strategy in textbook
@@ -24,7 +24,6 @@ int request_transfer(int clientfd, rio_t *rio);
 int parse_header(int clientfd, char *hostname, char *method, char *uri);
 void response_transfer(int clientfd, int serverfd, rio_t *rio);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
-void alarm_handler(int sig);
 
 /* prethreading server in textbook */
 void *thread(void *vargp);
@@ -280,17 +279,16 @@ int parse_header(int clientfd, char *hostname, char *method, char *uri)
         strcat(new_uri, rootptr+1);
     strcat(new_uri, " ");
     strcat(new_uri, "HTML/1.0\r\n");   // modify version HTML/1.1 into HTML/1.0
-    
+
     if ((serverfd = open_clientfd((char *)serverhost, (char *)serverport)) < 0){
         sprintf(serverhost, "%s:%s", serverhost, serverport);
         clienterror(clientfd, serverhost, "403", "Forbidden", "This URI is not allowed Access");
         return -1;
     }
+    
     rio_writen(serverfd, new_uri, strlen(new_uri));
     return serverfd;
 }
-
-
 
 /* get response from server and send it to client with caching response */
 void response_transfer(int clientfd, int serverfd, rio_t *rio)

@@ -1,3 +1,10 @@
+1. proxy.c - cache, multi-thread, cache overlapping checking
+2. proxy_prethread.c - cache, prethread.server, cache overlapping checking
+3. proxy_vervose.c - printf debugging version of proxy.c 
+4. echo/*.c, tiny/*.c - excercise solution from textbook(CS:APP)
+outcome : socre (70/70 : sequential proxy-40, concurrency-15, cache-15)
+error : if connecting with wrong ip, infinitly waiting thread is created by open_client()
+
 ####################################################################
 # CS:APP Proxy Lab
 #
