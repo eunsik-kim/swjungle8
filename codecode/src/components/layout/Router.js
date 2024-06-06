@@ -1,12 +1,12 @@
 import React from "react";
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './Layout'
-import Home from "../pages/Home";
-import Problem from "../pages/Problems";
-import Solve from "../pages/Solve";
-import Algorithm from "../pages/Algorithms";
-import SignIn from "../components/SignIn";
-import SignUp from "../components/SignUp";
+import Home from "../../pages/Home";
+import Problem from "../../pages/Problems";
+import Solve from "../../pages/Solve";
+import Algorithm from "../../pages/Algorithms";
+import SignIn from "../specific/SignIn";
+import SignUp from "../specific/SignUp";
 
 const Router = () => {
   return (

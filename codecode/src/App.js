@@ -1,5 +1,5 @@
 import './App.css';
-import Router from './layout/Router';
+import Router from './components/layout/Router';
 import theme from './styles/theme';
 import { ChakraProvider, Box } from '@chakra-ui/react';
 

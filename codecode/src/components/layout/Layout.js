@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Header from "./Header";
 import Footer from "./Footer";
 import { Divider } from '@chakra-ui/react';
+import Bodybox from "components/common/Bodybox";
 
 const LayoutStyles = styled.div`
   display: flex;
@@ -15,12 +16,16 @@ const LayoutStyles = styled.div`
 function Layout({children}) {
     return (
       <div>
-        <Header/>
+        <Bodybox>
+          <Header/>
+        </Bodybox>
         <Divider/>
-        <Divider/> 
-        <LayoutStyles>
-          {children}
-        </LayoutStyles>
+        <Divider/>
+        <Bodybox>
+          <LayoutStyles>
+            {children}
+          </LayoutStyles>
+        </Bodybox>
         <Divider/>
         <Divider mb={5}/>         
         <Footer/>
