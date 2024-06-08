@@ -1,5 +1,6 @@
 import React from "react";
-import MkTable from "components/common/MkTable";
+import MakeTable from "components/specific/MakeTable";
+import Bodybox from "components/common/Bodybox";
 
 const dummyData = {
   code: 200,
@@ -10,6 +11,8 @@ const dummyData = {
         id: 1,
         title: "Two Sum",
         content: "too hard to solve",
+        solved: "O",
+        source: "leet",
         link: "https://leetcode.com/problems/two-sum/",
         category: "Data Structure",
         score: 100,
@@ -21,6 +24,8 @@ const dummyData = {
         id: 2,
         title: "정ㅋ벅ㅋ",
         content: "이상하게 어려운 문제이다.",
+        solved: "X",
+        source: "백준",
         link: "https://www.acmicpc.net/problem/1237",
         category: "exception",
         score: 100,
@@ -33,13 +38,13 @@ const dummyData = {
 };
 
 const Problem = () => {
-  const PROBLEM_TABLE_TITLE = ['문제 번호', '제목', '난이도', '날짜'];
-  const SELECT_KEYS = ['id', 'title', 'level', 'updated_at']; // first key should be id 
+  const PROBLEM_TABLE_TITLE = ['문제 번호', '제목', '해결', '출처', '난이도', '날짜'];
+  const SELECT_KEYS = ['id', 'title', 'solved',  'source', 'level', 'updated_at']; // first key should be id 
   
   // get tableData selected by keys
   const selectedData = dummyData.data.posts.map(post => (
     SELECT_KEYS.map((key) => {
-        if (key === SELECT_KEYS[3])
+        if (key === 'updated_at')
           return post[key].split('T')[0]
         return post[key];
       }
@@ -47,7 +52,9 @@ const Problem = () => {
   ));
 
   return (
-    <MkTable data={selectedData} titles={PROBLEM_TABLE_TITLE} />
+    <Bodybox>
+      <MakeTable data={selectedData} titles={PROBLEM_TABLE_TITLE} />
+    </Bodybox>
   )
 }
 export default Problem;
