@@ -7,6 +7,7 @@ import Solve from "../../pages/Solve";
 import Algorithm from "../../pages/Algorithms";
 import SignIn from "../specific/SignIn";
 import SignUp from "../specific/SignUp";
+import ProblemSolve from "pages/ProblemSolve";
 
 const Router = () => {
   return (
@@ -15,6 +16,7 @@ const Router = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/problem" element={<Problem />} />
+          <Route path="/problem/:id" element={<ProblemSolve />} />
           <Route path="/solve" element={<Solve />} />
           <Route path="/algorithm" element={<Algorithm />} />        
           <Route path="/signin" element={<SignIn />} />
