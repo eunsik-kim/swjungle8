@@ -1,0 +1,24 @@
+{
+"status":string,
+"message":string,
+"data":{
+	"posts":[
+		{
+			"id":int,
+			"title":string,
+      "content":string,
+      "example":stirng,
+      "link":string,
+      "category": string,
+      "is_success" : bool,
+      "is_review" : bool,
+      "note" : string,
+      "code" : string,
+			"updated_at":datatime
+		},
+		{
+		...
+		}
+	]
+}
+}
