@@ -6,7 +6,7 @@ import { HStack, Text,} from '@chakra-ui/react';
 import Bodybox from "components/common/Bodybox";
 
 const dummyData = {
-  code: 200,
+  code: "200",
   message: "Success",
   data: {
     posts: [
@@ -45,9 +45,8 @@ const dummyData = {
         `,
         link: "https://leetcode.com/problems/two-sum/",
         category: "Data Structure",
-        score: 100,
-        is_review: false,
         is_success: true,
+        is_review: false,        
         note: 
         `A. 아이디어
 
@@ -74,8 +73,6 @@ const dummyData = {
                       return sorted([isin[target-num], idx])
                   isin[num] = idx 
         `,
-        author: "eunsik",
-        created_at: "2024-06-07T12:00:00Z",
         updated_at: "2024-06-07T12:30:00Z"
       },
     ]

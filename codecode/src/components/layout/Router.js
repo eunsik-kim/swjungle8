@@ -5,7 +5,7 @@ import Home from "../../pages/Home";
 import Problem from "../../pages/Problems";
 import Solve from "../../pages/Solve";
 import Algorithm from "../../pages/Algorithms";
-import SignIn from "../specific/SignIn";
+import Login from "../specific/Login";
 import SignUp from "../specific/SignUp";
 import ProblemSolve from "pages/ProblemSolve";
 
@@ -19,7 +19,7 @@ const Router = () => {
           <Route path="/problem/:id" element={<ProblemSolve />} />
           <Route path="/solve" element={<Solve />} />
           <Route path="/algorithm" element={<Algorithm />} />        
-          <Route path="/signin" element={<SignIn />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
         </Routes>
       </Layout>

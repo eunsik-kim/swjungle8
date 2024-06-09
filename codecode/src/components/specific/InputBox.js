@@ -1,8 +1,9 @@
 import React from "react";
+import Button from "components/common/Button";
 import Roundbox from "components/common/Roundbox";
 import NoteBox from "components/specific/NoteBox";
 import {
-  Tabs, TabList, TabPanels, Tab, TabPanel, Button, Spacer, Flex,
+  Tabs, TabList, TabPanels, Tab, TabPanel, Spacer, Flex,
 } from '@chakra-ui/react'
 import CodeEditor from './CodeEditor';
 
@@ -16,7 +17,7 @@ const InputBox = ({data, ...rest}) => {
               <Tab>코드</Tab>
             </TabList>
             <Spacer/>
-            <Button colorScheme='teal' size="sm">
+            <Button color='teal'px='7px'>
               저장
             </Button>
         </Flex>
