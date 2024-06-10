@@ -1,11 +1,14 @@
 import Button from "../common/Button";
-import SingupText from "./SignupText";
+import SingupText from "../specific/SignupText";
 import React, { useState } from "react";
 import { Input } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import HandleLogin from "services/HandleLogin";
 import Roundbox from "components/common/Roundbox";
+import { useSetRecoilState } from "recoil";
+import LoginState from "atoms/LoginState";
 import { Box, Flex, Center, Divider, InputRightElement, InputGroup } from "@chakra-ui/react";
+
 
 const Login = () => {
 	const navigate = useNavigate(); 
@@ -15,6 +18,7 @@ const Login = () => {
 	const handleClick = () => setShow(!show)
 	const handleUsernameChange = (event) => setUsername(event.target.value);
 	const handlePasswordChange = (event) => setPassword(event.target.value);
+	const setIsLogin = useSetRecoilState(LoginState);
 
 	return (
 		<Center>
@@ -38,7 +42,12 @@ const Login = () => {
 
 					<Flex justify="flex-end" mb={4}>
 						<Button color='teal' isDisabled = {!username || ! password} 
-							onClick={() => HandleLogin(username, password, navigate)} fontSize='13'>로그인</Button>
+							onClick={async () =>{
+								const isLoginSuccess = await HandleLogin(username, password);
+								if (isLoginSuccess) {
+									setIsLogin(true);
+									navigate('/');
+								}}} fontSize='13'>로그인</Button>
 					</Flex>
 					<Divider/>
 					<Divider mb={4}/>

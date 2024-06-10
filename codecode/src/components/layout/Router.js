@@ -5,8 +5,8 @@ import Home from "../../pages/Home";
 import Problem from "../../pages/Problems";
 import Solve from "../../pages/Solve";
 import Algorithm from "../../pages/Algorithms";
-import Login from "../specific/Login";
-import SignUp from "../specific/SignUp";
+import Login from "./Login";
+import SignUp from "./SignUp";
 import ProblemSolve from "pages/ProblemSolve";
 
 const Router = () => {

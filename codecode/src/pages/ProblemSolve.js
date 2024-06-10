@@ -4,6 +4,7 @@ import Problembox from '../components/specific/Problem';
 import InputBox from '../components/specific/InputBox';
 import { HStack, Text,} from '@chakra-ui/react';
 import Bodybox from "components/common/Bodybox";
+import GetProblems from "services/GetProblems";
 
 const dummyData = {
   code: "200",
@@ -81,6 +82,7 @@ const dummyData = {
 
 const ProblemSolve = () => {
   const {id} = useParams();
+  const newData = GetProblems(id);
   const data = dummyData.data.posts.find(post => post.id === parseInt(id, 10));
   if (!data) {
     return <Bodybox><Text fontSize='5xl' as='b'>Problem<Text color='Red'>Not</Text>Found</Text></Bodybox>;

@@ -1,6 +1,7 @@
 import React from "react";
 import MakeTable from "components/specific/MakeTable";
 import Bodybox from "components/common/Bodybox";
+import GetProblems from "services/GetProblems";
 
 const dummyData = {
   code: "200",
@@ -32,7 +33,7 @@ const dummyData = {
 const Problem = () => {
   const PROBLEM_TABLE_TITLE = ['문제 번호', '제목', '해결', '복습', '출처', '난이도', '날짜'];
   const SELECT_KEYS = ['id', 'title', 'is_success',  'is_review', 'source', 'level', 'updated_at']; // first key should be id 
-  
+  const data = GetProblems("");
   // get tableData selected by keys
   const selectedData = dummyData.data.posts.map(post => (
     SELECT_KEYS.map((key) => {
