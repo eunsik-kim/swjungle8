@@ -1,11 +1,10 @@
 import Cookies from "js-cookie";
 import axios from "./AxiosConfig";
 
-const HandleLogout = (navigate) => {
+const HandleLogout = () => {
   Cookies.remove('accessToken');
   Cookies.remove('refreshToken');
   delete axios.defaults.headers.common['Authorization'];
-  navigate('/');
 };
 
 export default HandleLogout;

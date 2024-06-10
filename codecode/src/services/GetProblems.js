@@ -1,11 +1,15 @@
 import axios from "./AxiosConfig";
+import { postUrl } from "./Urlconfig";
 
-const GetProblems = async () => {
+const GetProblems = async ({problem_no}) => {
   try {
+    if (problem_no)
+      postUrl += '/'+ problem_no
     const response = await axios.get(postUrl);
-    return 
+    return response.data
   } catch (e) {
-    alert(e.message);
+    const emsg = (e.response?.data?.message || '회원가입 실패!'); // 에러 메시지 설정
+    alert(emsg);
   }; 
 };
 

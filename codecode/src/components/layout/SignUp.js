@@ -45,7 +45,13 @@ const SignUp = () => {
 					<InputErrorText> {checkPasswordError} </InputErrorText>
 					<Center>
 						<Button color='teal' isDisabled = {usernameError || passwordError || checkPasswordError} 
-							onClick={() => HandleSignup(username, password, navigate)} fontSize='13'>회원가입</Button>
+							onClick={async () => {
+								const isSignupSuccess = await HandleSignup(username, password);
+								if (isSignupSuccess){
+									alert('회원가입 성공');
+									navigate('/login');
+								}
+							}} fontSize='13'>회원가입</Button>
 					</Center>
 				</Flex>
 			</Roundbox>
