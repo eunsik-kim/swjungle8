@@ -1,7 +1,7 @@
 import { atom } from "recoil";
 
 const AlRefreshState = atom({
-  key: 'Refresh',
+  key: 'AlRefresh',
   default: false,
 });
 
