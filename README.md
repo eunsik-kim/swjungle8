@@ -53,6 +53,8 @@ useState를 사용하여 위의 경우를 검증하였고 문제시 회원가입
 server에서 cookie에 저장을 하지 않고 보냈기 때문에 cookies에 저장할 때 httponly를 false로 설정하였습니다. 
 그에 따른 xss 공격에 막기위해 innerHTML과 같은 속성을 사용하지 않았고 간단한 xss test로 확인하였습니다.
 
+![image](https://github.com/eunsik-kim/Codecode/assets/153556378/48a2868f-683d-440f-bffa-121deecbf875)
+
 #### Custom Hook
 아직 react의 Hook에 대해선 많이 익숙치 않아서 좋은 응용을 하진 못하였습니다. 
 state와 onchange를 같이 사용하는 경우가 많은데 쉽게 적용할 수 있는 hook을 만들어 사용했습니다.
