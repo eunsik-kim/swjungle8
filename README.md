@@ -1,4 +1,4 @@
-![image](https://github.com/eunsik-kim/Codecode/assets/153556378/faf7fd0b-f3c8-46fc-bd77-1c4679cb9f38)### Codecode
+### Codecode
 
 알고리즘 문제 연습, 복습, 분석을 하는 사이트 입니다.
 백준과 leetcode를 참고하여 만들었습니다. [chakra](https://v2.chakra-ui.com/)를 사용해서 대부분의 인터페이스를 구성하였습니다.
