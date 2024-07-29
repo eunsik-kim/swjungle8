@@ -8,7 +8,7 @@
 | W04 | data structure |
 | W05 | malloc Lab |
 | W06 | web server |
-| W07 ~ 11 | Pintos |
+| W07 ~ 11 | OS project |
 | W12 | algorithm review |
 | W13 | React excercise |
 | W14 ~ W18 | Final project |

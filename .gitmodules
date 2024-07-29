@@ -1,0 +1,7 @@
+[submodule "pintos"]
+	path = 7week_pintos
+	url = https://github.com/eunsik-kim/pintos
+
+[submodule "chalna-app"]
+	path = 14week_chalna-app
+	url = https://github.com/swjungle-kimbap/chalna-app
