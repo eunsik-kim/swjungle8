@@ -1,0 +1,41 @@
+#logo {
+  font-size: 4rem;
+  color: #333;
+  text-align: center;
+}
+
+#articleButton {
+  float: right;
+  font-size: 20px;
+  padding-right: 15px;
+}
+
+.dotLine {
+  border: none;
+  border-top: 2px dotted;
+}
+
+.thumnail-image {
+  width: 100%; /* 이미지 너비를 부모 요소의 100%로 설정 */
+  height: auto; /* 이미지 높이는 비율에 맞게 자동 조정 */
+}
+
+.modal-content {
+  width: 450px; 
+}
+
+.column.is-half {
+  padding: 0; /* 패딩을 0으로 설정하여 없앱니다. */
+}
+
+.emoji-button{
+  float: right;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;  
+
+}
+.card-footer {  display: flex;
+  justify-content: flex-end;
+}
